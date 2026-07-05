@@ -60,12 +60,73 @@ Open [http://localhost:8000](http://localhost:8000), grant camera and microphone
 
 Models are downloaded automatically on first run (~2.6 GB for Gemma 4 E2B, plus TTS models).
 
+## Bengali Localization
+
+This project includes a **Bengali-language variant** powered by a Node.js proxy server that integrates free APIs for multilingual support. The UI, AI prompts, and TTS are all configured for Bengali.
+
+### Bengali Quick Start
+
+You'll need **two API keys** (both free tier available):
+
+1. **Google Gemini API** — Get a free key at https://aistudio.google.com/app/apikeys
+2. **Groq Whisper API** — Get a free key at https://console.groq.com/keys
+
+Then:
+
+```bash
+# Terminal 1: Start the Python backend (serves HTML + static files)
+cd src
+uv run server.py
+# → Listens on http://localhost:8000
+
+# Terminal 2: Start the Node.js proxy (Bengali STT/LLM/TTS)
+cd proxy
+npm install
+cp .env.example .env
+# Edit .env with your API keys:
+#   GEMINI_API_KEY=...
+#   GROQ_API_KEY=...
+npm start
+# → Listens on ws://localhost:3000/ws
+```
+
+Open [http://localhost:8000](http://localhost:8000) and start speaking **Bengali** to the AI. It will:
+- **Transcribe** your Bengali speech (Groq Whisper)
+- **Understand** context from your camera (Google Gemini 2.0 Flash)
+- **Respond** in Bengali with natural, conversational phrasing
+- **Speak back** in Bengali (Microsoft Text-to-Speech: `bn-BD-NabanitaNeural`)
+
+**Note:** Bengali audio TTS requires `edge-tts` (free, no API key). On macOS, also install FFmpeg to convert MP3 → PCM:
+```bash
+brew install ffmpeg
+```
+
+#### Bengali Architecture
+
+```
+Browser (বাংলায় কথা বলুন)
+    │
+    ├─ WebSocket (16kHz Bengali audio + JPEG)
+    ▼
+Node.js Proxy (port 3000)
+    ├── Groq Whisper  → Bengali transcription
+    ├── Google Gemini → Bengali understanding + response
+    └── edge-tts      → Bengali audio output
+    │
+    ├─ WebSocket (streamed Bengali audio)
+    ▼
+Browser playback + Bengali transcript
+```
+
+All Bengali text is professionally translated, not robotic or literal — designed to sound natural to native speakers.
+
 ## Configuration
 
 | Variable     | Default                        | Description                                    |
 | ------------ | ------------------------------ | ---------------------------------------------- |
 | `MODEL_PATH` | auto-download from HuggingFace | Path to a local `gemma-4-E2B-it.litertlm` file |
 | `PORT`       | `8000`                         | Server port                                    |
+| `PROXY_PORT` | `3000`                         | Node.js Bengali proxy port                     |
 
 ## Performance (Apple M3 Pro)
 

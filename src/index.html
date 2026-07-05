@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parlor</title>
+<title>পার্লর</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --c-bg: #050509;
@@ -30,7 +30,7 @@
     --glow: var(--c-loading);
     --glow-dim: var(--c-loading-dim);
 
-    --font-body: 'Instrument Sans', system-ui, sans-serif;
+    --font-body: 'Hind Siliguri', 'Instrument Sans', system-ui, sans-serif;
     --font-display: 'Syne', system-ui, sans-serif;
   }
 
@@ -415,16 +415,14 @@
 </head>
 <body>
 
-<header>
-  <div class="logo">
-    <div class="logo-mark"></div>
-    <h1>Parlor</h1>
-  </div>
-  <span class="model-label">Gemma 4 E2B</span>
-  <div id="status" class="status-pill disconnected">Disconnected</div>
-</header>
-
-<div class="portal-stack">
+  <header>
+    <div class="logo">
+      <div class="logo-mark"></div>
+      <h1>পার্লর</h1>
+    </div>
+    <span class="model-label">Gemini + Groq</span>
+    <div id="status" class="status-pill disconnected">বিচ্ছিন্ন</div>
+  </header><div class="portal-stack">
   <!-- Webcam viewport with glow layers -->
   <div id="viewportWrap" class="viewport-wrap loading">
     <div class="viewport-glow"></div>
@@ -441,14 +439,14 @@
 
   <!-- Controls -->
   <div class="controls">
-    <button id="cameraToggle" class="ctrl-btn active">Camera On</button>
+    <button id="cameraToggle" class="ctrl-btn active">ক্যামেরা চালু</button>
     <div class="state-indicator">
       <div id="stateDot" class="dot loading"></div>
-      <span id="stateText">Loading...</span>
+      <span id="stateText">লোড হচ্ছে...</span>
     </div>
     <span class="on-device-pill">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="2"/><path d="M5 4V3a3 3 0 0 1 6 0v1"/></svg>
-      On-device
+      ডিভাইসে চলছে
     </span>
   </div>
 </div>
@@ -567,7 +565,7 @@ function setState(newState) {
 
   // Update state indicator
   stateDot.className = `dot ${newState}`;
-  const labels = { loading: 'Loading...', listening: 'Listening', processing: 'Thinking...', speaking: 'Speaking' };
+  const labels = { loading: 'লোড হচ্ছে...', listening: 'শুনছি', processing: 'ভাবছি...', speaking: 'বলছি' };
   stateText.textContent = labels[newState] || newState;
 
   // Update viewport glow class
@@ -611,13 +609,17 @@ function setState(newState) {
 
 // ── WebSocket ──
 function connect() {
-  ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  // Connect to Node.js proxy server at port 3000 instead of Python backend at port 8000
+  const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const proxyPort = 3000;
+  const wsUrl = `${wsProtocol}://${location.hostname}:${proxyPort}/ws`;
+  ws = new WebSocket(wsUrl);
   ws.onopen = () => {
-    setStatus('connected', 'Connected');
+    setStatus('connected', 'সংযুক্ত');
     if (state !== 'loading') setState('listening');
   };
   ws.onclose = () => {
-    setStatus('disconnected', 'Disconnected');
+    setStatus('disconnected', 'বিচ্ছিন্ন');
     setTimeout(connect, 2000);
   };
   ws.onmessage = ({ data }) => {
@@ -715,7 +717,7 @@ function handleSpeechEnd(audio) {
 
   setState('processing');
   setStatus('processing', 'Processing');
-  addMessage('user', '<span class="loading-dots"><span></span><span></span><span></span></span>', imageBase64 ? 'with camera' : '');
+  addMessage('user', '<span class="loading-dots"><span></span><span></span><span></span></span>', imageBase64 ? 'ক্যামেরা সহ' : '');
 
   const payload = { audio: wavBase64 };
   if (imageBase64) payload.image = imageBase64;
@@ -804,7 +806,7 @@ function queueAudioChunk(base64Pcm) {
     if (streamSources.length === 0 && state === 'speaking') {
       currentSource = null;
       setState('listening');
-      setStatus('connected', 'Connected');
+      setStatus('connected', 'সংযুক্ত');
     }
   };
 }
@@ -821,7 +823,7 @@ function addMessage(role, text, meta) {
 cameraToggle.addEventListener('click', () => {
   cameraEnabled = !cameraEnabled;
   cameraToggle.classList.toggle('active', cameraEnabled);
-  cameraToggle.textContent = cameraEnabled ? 'Camera On' : 'Camera Off';
+  cameraToggle.textContent = cameraEnabled ? 'ক্যামেরা চালু' : 'ক্যামেরা বন্ধ';
   video.style.opacity = cameraEnabled ? 1 : 0.3;
 });
 
