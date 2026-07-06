@@ -51,7 +51,7 @@ const TTS_DEFAULT_TIMEOUT = 15000;
 const TTS_DEFAULT_CACHE_SIZE = 100;
 
 // ─── STT ────────────────────────────────────────────────────────────
-const STT_DEFAULT_MODEL = 'medium';
+const STT_DEFAULT_MODEL = 'large-v3-turbo';
 const STT_DEFAULT_RETRIES = 2;
 const STT_DEFAULT_TIMEOUT = 120_000; // 2 min (first download)
 const STT_DEFAULT_MAX_BUFFER = 1024 * 1024; // 1 MB stdout

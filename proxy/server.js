@@ -119,7 +119,7 @@ server.listen(config.PORT, '127.0.0.1', () => {
   console.log(`║  WebSocket : ws://localhost:${config.PORT}/ws     ║`);
   console.log(`║  HTTP      : http://localhost:${config.PORT}      ║`);
   console.log('╠════════════════════════════════════════╣');
-  console.log('║  STT: Local Whisper + ☁️  cloud fallback   ║');
+  console.log('║  STT: Whisper.cpp (GGML/Metal) + ☁️ fallback║');
   console.log(`║  LLM: ${config.AI_PROVIDER} / ${config.LLM_MODEL.padEnd(25)}║`);
   console.log('║  TTS: edge-tts (Microsoft Bengali)    ║');
   console.log('╚════════════════════════════════════════╝');

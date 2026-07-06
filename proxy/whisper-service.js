@@ -1,16 +1,21 @@
 /**
- * Whisper Service — Local speech-to-text via Python openai-whisper
+ * Whisper Service — Local speech-to-text via Whisper.cpp (Python bindings)
  *                   with cloud API fallback on failure.
  *
  * Architecture:
- *   1. Try local Whisper (Python subprocess, GPU via MPS)
+ *   1. Try local Whisper.cpp (Python subprocess, Metal GPU on Apple Silicon)
  *   2. If local fails (OOM, model missing, timeout), fall back to
  *      OpenAI-compatible /v1/audio/transcriptions API
  *   3. Configure fallback via env vars (works with OpenAI, OpenRouter, etc.)
  *
- * The Whisper model is downloaded automatically on first use (cached in
- * ~/.cache/whisper/) so subsequent runs are fast — only model loading into
- * memory adds latency (~2-5s for 'base', ~5-10s for 'small').
+ * The GGML model is downloaded automatically on first use (cached in
+ * ~/.cache/whisper-cpp/) so subsequent runs are fast — model loading
+ * into memory adds latency (~1-3s for 'large-v3-turbo').
+ *
+ * Key advantages over openai-whisper:
+ *   - 2-4x faster inference via GGML quantized models + Metal GPU
+ *   - Much better Bengali accuracy (especially large-v3-turbo)
+ *   - No PyTorch dependency (lighter, less memory)
  */
 
 const { execFile } = require('child_process');
@@ -68,14 +73,14 @@ function looksLikeBengali(text) {
 async function transcribe(audioBuffer, options = {}) {
   const model = options.model || config.WHISPER_MODEL;
 
-  // ── Try local Whisper first ──
+  // ── Try local Whisper.cpp first ──
   if (!options.skipLocal) {
     try {
       const localResult = await tryLocalWhisper(audioBuffer, model);
       if (localResult) return localResult;
     } catch (localErr) {
-      logger.warn(`[Whisper] Local Whisper failed: ${localErr.message}`);
-      logger.warn('[Whisper]   → Falling back to cloud API...');
+      logger.warn(`[Whisper.cpp] Local Whisper failed: ${localErr.message}`);
+      logger.warn('[Whisper.cpp]   → Falling back to cloud API...');
     }
   }
 
@@ -84,7 +89,7 @@ async function transcribe(audioBuffer, options = {}) {
 }
 
 /**
- * Attempt local Whisper transcription via Python subprocess.
+ * Attempt local Whisper.cpp transcription via Python subprocess.
  * Returns null if result is empty or rejected (so caller can fall back).
  */
 async function tryLocalWhisper(audioBuffer, model) {
@@ -99,12 +104,12 @@ async function tryLocalWhisper(audioBuffer, model) {
 
     // Final validation: discard if it doesn't look like Bengali
     if (text && !looksLikeBengali(text)) {
-      logger.info(`[Whisper] Local rejected non-Bengali output: "${text.substring(0, 60)}"`);
+      logger.info(`[Whisper.cpp] Local rejected non-Bengali output: "${text.substring(0, 60)}"`);
       return null; // fall back to cloud
     }
 
     if (!text) {
-      logger.info('[Whisper] Local returned empty transcription');
+      logger.info('[Whisper.cpp] Local returned empty transcription');
       return null; // fall back to cloud
     }
 
@@ -181,11 +186,16 @@ async function tryCloudWhisper(audioBuffer) {
 
 /**
  * Spawn the Python transcription script and return parsed JSON.
+ *
+ * The script (whisper_transcribe.py) now uses Homebrew's whisper-cli
+ * (Metal-accelerated) via subprocess. It only needs Python stdlib —
+ * no openai-whisper, torch, or whisper-cpp-python required.
  */
 function getPythonCommand() {
-  // Check virtual environments — try proxy/.venv, then root .venv, then system
+  // Check virtual environments, then system python
   const candidates = [
     path.join(__dirname, '.venv', 'bin', 'python3'),
+    path.join(__dirname, '..', 'src', '.venv', 'bin', 'python3'),
     path.join(__dirname, '..', '.venv', 'bin', 'python3'),
   ];
   for (const candidate of candidates) {

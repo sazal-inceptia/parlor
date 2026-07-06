@@ -83,8 +83,8 @@ if (isNaN(LLM_MAX_TOKENS) || LLM_MAX_TOKENS < 1 || LLM_MAX_TOKENS > 128_000) {
 
 // ─── STT ────────────────────────────────────────────────────────────
 
-const WHISPER_MODEL = process.env.WHISPER_MODEL || 'medium';
-const VALID_WHISPER_MODELS = ['tiny', 'base', 'small', 'medium', 'large'];
+const WHISPER_MODEL = process.env.WHISPER_MODEL || 'large-v3-turbo';
+const VALID_WHISPER_MODELS = ['tiny', 'base', 'small', 'medium', 'large', 'large-v3', 'large-v3-turbo'];
 if (!VALID_WHISPER_MODELS.includes(WHISPER_MODEL)) {
   console.error(`❌ Invalid WHISPER_MODEL: "${WHISPER_MODEL}".`);
   console.error(`   Valid options: ${VALID_WHISPER_MODELS.join(', ')}`);
@@ -99,8 +99,8 @@ if (isNaN(STT_MAX_RETRIES) || STT_MAX_RETRIES < 0 || STT_MAX_RETRIES > 10) {
 
 // ─── STT Cloud Fallback ─────────────────────────────────────────────
 
-const FALLBACK_STT_API_KEY = process.env.FALLBACK_STT_API_KEY || process.env.OPENROUTER_API_KEY || '';
-const FALLBACK_STT_BASE_URL = process.env.FALLBACK_STT_BASE_URL || 'https://api.openai.com/v1';
+const FALLBACK_STT_API_KEY = process.env.FALLBACK_STT_API_KEY || '';
+const FALLBACK_STT_BASE_URL = process.env.FALLBACK_STT_BASE_URL || '';
 const FALLBACK_STT_MODEL = process.env.FALLBACK_STT_MODEL || 'whisper-1';
 
 // Validate fallback URL format
