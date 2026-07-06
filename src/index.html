@@ -420,7 +420,7 @@
       <div class="logo-mark"></div>
       <h1>পার্লর</h1>
     </div>
-    <span class="model-label">Gemini + Groq</span>
+    <span class="model-label">Whisper + OpenRouter</span>
     <div id="status" class="status-pill disconnected">বিচ্ছিন্ন</div>
   </header><div class="portal-stack">
   <!-- Webcam viewport with glow layers -->
@@ -609,7 +609,9 @@ function setState(newState) {
 
 // ── WebSocket ──
 function connect() {
-  // Connect to Node.js proxy server at port 3000 instead of Python backend at port 8000
+  // Connect to the Node.js proxy on port 3000 for WebSocket.
+  // The page may be served from port 8000 (Python) or 3000 (Node).
+  // But WebSocket lives on the Node.js proxy at port 3000.
   const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
   const proxyPort = 3000;
   const wsUrl = `${wsProtocol}://${location.hostname}:${proxyPort}/ws`;
@@ -774,10 +776,12 @@ function queueAudioChunk(base64Pcm) {
   ensureAudioCtx();
 
   // Decode base64 -> Int16 PCM -> Float32
-  const bin = atob(base64Pcm);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  const int16 = new Int16Array(bytes.buffer);
+  var bin = atob(base64Pcm);
+  // Ensure even byte count (PCM16 requires 2 bytes per sample)
+  if (bin.length % 2 !== 0) bin = bin.slice(0, bin.length - 1);
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  var int16 = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.length / 2);
   const float32 = new Float32Array(int16.length);
   for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
 
